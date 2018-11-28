@@ -1,5 +1,6 @@
 // +build windows
-package main
+
+package sttub30
 
 /*
 #cgo CFLAGS: -I./Sources/STTubeDevice -I./Sources/Include
@@ -20,8 +21,6 @@ import (
 	"fmt"
 	"strings"
 	"unsafe"
-
-	"github.com/willtoth/setupapi"
 )
 
 var STErrorStrings = map[int](string){
@@ -48,6 +47,34 @@ var STErrorStrings = map[int](string){
 	C.STDEVICE_DESCRIPTORNOTFOUND:      "Descriptor Not Found",
 	C.STDEVICE_PIPESARECLOSED:          "Pipes are closed",
 	C.STDEVICE_PIPESAREOPEN:            "Pipes are open",
+}
+
+const (
+	descriptorConfigLevel         = C.DESCRIPTOR_CONFIGURATION_LEVEL
+	descriptorIntfAltSettingLevel = C.DESCRIPTOR_INTERFACEALTSET_LEVEL
+	descriptorEndpointLevel       = C.DESCRIPTOR_ENDPOINT_LEVEL
+
+	urbVendorDevice    = C.URB_FUNCTION_VENDOR_DEVICE
+	urbVendorInterface = C.URB_FUNCTION_VENDOR_INTERFACE
+	urbVendorEndpoint  = C.URB_FUNCTION_VENDOR_ENDPOINT
+	urbVendorOther     = C.URB_FUNCTION_VENDOR_OTHER
+
+	urbClassDevice    = C.URB_FUNCTION_CLASS_DEVICE
+	urbClassInterface = C.URB_FUNCTION_CLASS_INTERFACE
+	urbClassEndpoint  = C.URB_FUNCTION_CLASS_ENDPOINT
+	urbClassOther     = C.URB_FUNCTION_CLASS_OTHER
+
+	vendorDirectionIn  = C.VENDOR_DIRECTION_IN
+	vendorDirectionOut = C.VENDOR_DIRECTION_OUT
+)
+
+type ControlPipeRequest struct {
+	Function  uint16
+	Direction uint64
+	Request   byte
+	Value     uint16
+	Index     uint16
+	Length    uint64
 }
 
 /* TODO: would be better to convert to pure go:
@@ -241,34 +268,6 @@ func (dev STDevice) Reset() error {
 	return checkSTError(int(errno))
 }
 
-const (
-	descriptorConfigLevel         = C.DESCRIPTOR_CONFIGURATION_LEVEL
-	descriptorIntfAltSettingLevel = C.DESCRIPTOR_INTERFACEALTSET_LEVEL
-	descriptorEndpointLevel       = C.DESCRIPTOR_ENDPOINT_LEVEL
-
-	urbVendorDevice    = C.URB_FUNCTION_VENDOR_DEVICE
-	urbVendorInterface = C.URB_FUNCTION_VENDOR_INTERFACE
-	urbVendorEndpoint  = C.URB_FUNCTION_VENDOR_ENDPOINT
-	urbVendorOther     = C.URB_FUNCTION_VENDOR_OTHER
-
-	urbClassDevice    = C.URB_FUNCTION_CLASS_DEVICE
-	urbClassInterface = C.URB_FUNCTION_CLASS_INTERFACE
-	urbClassEndpoint  = C.URB_FUNCTION_CLASS_ENDPOINT
-	urbClassOther     = C.URB_FUNCTION_CLASS_OTHER
-
-	vendorDirectionIn  = C.VENDOR_DIRECTION_IN
-	vendorDirectionOut = C.VENDOR_DIRECTION_OUT
-)
-
-type ControlPipeRequest struct {
-	Function  uint16
-	Direction uint64
-	Request   byte
-	Value     uint16
-	Index     uint16
-	Length    uint64
-}
-
 func (dev STDevice) ControlPipeRequest(Request ControlPipeRequest, Data []byte) error {
 	var req C.CNTRPIPE_RQ
 
@@ -283,52 +282,10 @@ func (dev STDevice) ControlPipeRequest(Request ControlPipeRequest, Data []byte) 
 
 	//copy(buffer[:], Data)
 
+	if uint64(len(Data)) < Request.Length {
+		return fmt.Errorf("Data buffer too small, must be at least as large as Request.Length.")
+	}
+
 	errno := C.STDevice_ControlPipeRequest(dev.handle, &req, C.PBYTE(unsafe.Pointer(&Data[0])))
 	return checkSTError(int(errno))
-}
-
-func main() {
-	//GUID of STM32F3 DFU Driver
-	guid := setupapi.Guid{0x3fe809ab, 0xfb91, 0x4cb5, [8]byte{0xa6, 0x43, 0x69, 0x67, 0x0d, 0x52, 0x36, 0x6e}}
-	devInfo, err := setupapi.SetupDiGetClassDevsEx(guid, "", 0, setupapi.Present|setupapi.InterfaceDevice, 0, "", 0)
-	if err != nil {
-		fmt.Printf("Error get class devs ex: %v", err)
-		return
-	}
-
-	devPath, err := devInfo.DevicePath(guid)
-	if err != nil {
-		fmt.Printf("Error device path: %s", err.Error())
-		return
-	}
-
-	dev, err := Open(devPath)
-
-	if err != nil {
-		fmt.Printf("Failed to open device: %v", err)
-		return
-	}
-
-	desc, err := dev.GetDeviceDescriptor()
-
-	if err != nil {
-		fmt.Printf("Failed to get device descriptor: %v", err)
-		return
-	}
-
-	manStr, err := dev.GetStringDescriptor(uint(desc.iManufacturer))
-
-	if err != nil {
-		fmt.Printf("Failed to get device string descriptor: %v", err)
-		return
-	}
-
-	fmt.Printf("%s\n", manStr)
-
-	err = dev.Close()
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
 }
