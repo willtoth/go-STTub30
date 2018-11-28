@@ -1,4 +1,5 @@
-package STTub30
+// +build windows
+package main
 
 /*
 #cgo CFLAGS: -I./Sources/STTubeDevice -I./Sources/Include
@@ -22,57 +23,30 @@ import (
 	"github.com/willtoth/setupapi"
 )
 
-const (
-	STDEVICE_ERROR_OFFSET            = 0x12340000
-	STDEVICE_NOERROR                 = STDEVICE_ERROR_OFFSET
-	STDEVICE_MEMORY                  = (STDEVICE_ERROR_OFFSET + 1)
-	STDEVICE_BADPARAMETER            = (STDEVICE_ERROR_OFFSET + 2)
-	STDEVICE_NOTIMPLEMENTED          = (STDEVICE_ERROR_OFFSET + 3)
-	STDEVICE_ENUMFINISHED            = (STDEVICE_ERROR_OFFSET + 4)
-	STDEVICE_OPENDRIVERERROR         = (STDEVICE_ERROR_OFFSET + 5)
-	STDEVICE_ERRORDESCRIPTORBUILDING = (STDEVICE_ERROR_OFFSET + 6)
-	STDEVICE_PIPECREATIONERROR       = (STDEVICE_ERROR_OFFSET + 7)
-	STDEVICE_PIPERESETERROR          = (STDEVICE_ERROR_OFFSET + 8)
-	STDEVICE_PIPEABORTERROR          = (STDEVICE_ERROR_OFFSET + 9)
-	STDEVICE_STRINGDESCRIPTORERROR   = (STDEVICE_ERROR_OFFSET + 0xA)
-	STDEVICE_DRIVERISCLOSED          = (STDEVICE_ERROR_OFFSET + 0xB)
-	STDEVICE_VENDOR_RQ_PB            = (STDEVICE_ERROR_OFFSET + 0xC)
-	STDEVICE_ERRORWHILEREADING       = (STDEVICE_ERROR_OFFSET + 0xD)
-	STDEVICE_ERRORBEFOREREADING      = (STDEVICE_ERROR_OFFSET + 0xE)
-	STDEVICE_ERRORWHILEWRITING       = (STDEVICE_ERROR_OFFSET + 0xF)
-	STDEVICE_ERRORBEFOREWRITING      = (STDEVICE_ERROR_OFFSET + 0x10)
-	STDEVICE_DEVICERESETERROR        = (STDEVICE_ERROR_OFFSET + 0x11)
-	STDEVICE_CANTUSEUNPLUGEVENT      = (STDEVICE_ERROR_OFFSET + 0x12)
-	STDEVICE_INCORRECTBUFFERSIZE     = (STDEVICE_ERROR_OFFSET + 0x13)
-	STDEVICE_DESCRIPTORNOTFOUND      = (STDEVICE_ERROR_OFFSET + 0x14)
-	STDEVICE_PIPESARECLOSED          = (STDEVICE_ERROR_OFFSET + 0x15)
-	STDEVICE_PIPESAREOPEN            = (STDEVICE_ERROR_OFFSET + 0x16)
-)
-
 var STErrorStrings = map[int](string){
-	STDEVICE_NOERROR:                 "No Error",
-	STDEVICE_MEMORY:                  "Memory",
-	STDEVICE_BADPARAMETER:            "Bad Parameter",
-	STDEVICE_NOTIMPLEMENTED:          "Not Implemented",
-	STDEVICE_ENUMFINISHED:            "Enum Finished",
-	STDEVICE_OPENDRIVERERROR:         "Open Driver Error",
-	STDEVICE_ERRORDESCRIPTORBUILDING: "Error Descriptor Building",
-	STDEVICE_PIPECREATIONERROR:       "Pipe Creation Error",
-	STDEVICE_PIPERESETERROR:          "Pipe Reset Error",
-	STDEVICE_PIPEABORTERROR:          "Pipe Abort Error",
-	STDEVICE_STRINGDESCRIPTORERROR:   "String Descriptor Error",
-	STDEVICE_DRIVERISCLOSED:          "Driver is closed",
-	STDEVICE_VENDOR_RQ_PB:            "Vendor RQ PB",
-	STDEVICE_ERRORWHILEREADING:       "Error While Reading",
-	STDEVICE_ERRORBEFOREREADING:      "Error Before Reading",
-	STDEVICE_ERRORWHILEWRITING:       "Error While Writing",
-	STDEVICE_ERRORBEFOREWRITING:      "Error Before Writing",
-	STDEVICE_DEVICERESETERROR:        "Device Set Error",
-	STDEVICE_CANTUSEUNPLUGEVENT:      "Cant Use Unplug Event",
-	STDEVICE_INCORRECTBUFFERSIZE:     "Incorrect Buffer Size",
-	STDEVICE_DESCRIPTORNOTFOUND:      "Descriptor Not Found",
-	STDEVICE_PIPESARECLOSED:          "Pipes are closed",
-	STDEVICE_PIPESAREOPEN:            "Pipes are open",
+	C.STDEVICE_NOERROR:                 "No Error",
+	C.STDEVICE_MEMORY:                  "Memory",
+	C.STDEVICE_BADPARAMETER:            "Bad Parameter",
+	C.STDEVICE_NOTIMPLEMENTED:          "Not Implemented",
+	C.STDEVICE_ENUMFINISHED:            "Enum Finished",
+	C.STDEVICE_OPENDRIVERERROR:         "Open Driver Error",
+	C.STDEVICE_ERRORDESCRIPTORBUILDING: "Error Descriptor Building",
+	C.STDEVICE_PIPECREATIONERROR:       "Pipe Creation Error",
+	C.STDEVICE_PIPERESETERROR:          "Pipe Reset Error",
+	C.STDEVICE_PIPEABORTERROR:          "Pipe Abort Error",
+	C.STDEVICE_STRINGDESCRIPTORERROR:   "String Descriptor Error",
+	C.STDEVICE_DRIVERISCLOSED:          "Driver is closed",
+	C.STDEVICE_VENDOR_RQ_PB:            "Vendor RQ PB",
+	C.STDEVICE_ERRORWHILEREADING:       "Error While Reading",
+	C.STDEVICE_ERRORBEFOREREADING:      "Error Before Reading",
+	C.STDEVICE_ERRORWHILEWRITING:       "Error While Writing",
+	C.STDEVICE_ERRORBEFOREWRITING:      "Error Before Writing",
+	C.STDEVICE_DEVICERESETERROR:        "Device Set Error",
+	C.STDEVICE_CANTUSEUNPLUGEVENT:      "Cant Use Unplug Event",
+	C.STDEVICE_INCORRECTBUFFERSIZE:     "Incorrect Buffer Size",
+	C.STDEVICE_DESCRIPTORNOTFOUND:      "Descriptor Not Found",
+	C.STDEVICE_PIPESARECLOSED:          "Pipes are closed",
+	C.STDEVICE_PIPESAREOPEN:            "Pipes are open",
 }
 
 /* TODO: would be better to convert to pure go:
@@ -94,63 +68,64 @@ type DeviceDesc struct {
 }
 */
 
-type STDevice C.HANDLE
 type DeviceDesc C.USB_DEVICE_DESCRIPTOR
 type DeviceConfig C.USB_CONFIGURATION_DESCRIPTOR
 
-var stErrorString = map[int]string{}
-
 func checkSTError(code int) error {
-	if code != STDEVICE_NOERROR {
+	if code != C.STDEVICE_NOERROR {
 		return fmt.Errorf("%s", STErrorStrings[code])
 	}
 	return nil
 }
 
-func STDeviceOpen(devicePath string, device STDevice) error {
-	handle := C.HANDLE(device)
-	errno := C.STDevice_Open(C.CString(devicePath), C.LPHANDLE(&handle), C.LPHANDLE(C.NULL))
+type STDevice struct {
+	handle C.HANDLE
+}
+
+func Open(devicePath string) (STDevice, error) {
+	var device STDevice
+	errno := C.STDevice_Open(C.CString(devicePath), &device.handle, C.LPHANDLE(C.NULL))
+	return device, checkSTError(int(errno))
+}
+
+func (dev STDevice) OpenPipes(device STDevice) error {
+	errno := C.STDevice_OpenPipes(dev.handle)
 	return checkSTError(int(errno))
 }
 
-func STDeviceOpenPipes(device STDevice) error {
-	errno := C.STDevice_OpenPipes(C.HANDLE(device))
+func (dev STDevice) ClosePipes() error {
+	errno := C.STDevice_ClosePipes(dev.handle)
 	return checkSTError(int(errno))
 }
 
-func STDeviceClosePipes(device STDevice) error {
-	errno := C.STDevice_ClosePipes(C.HANDLE(device))
+func (dev STDevice) Close() error {
+	errno := C.STDevice_Close(dev.handle)
 	return checkSTError(int(errno))
 }
 
-func STDeviceClose(device STDevice) error {
-	errno := C.STDevice_Close(C.HANDLE(device))
-	return checkSTError(int(errno))
-}
-
-func STDeviceGetStringDescriptor(device STDevice, nIndex uint) (string, error) {
+func (dev STDevice) GetStringDescriptor(nIndex uint) (string, error) {
 	nStringLength := uint(512)
 	var szStringBuf [512]byte
-	errno := C.STDevice_GetStringDescriptor(C.HANDLE(device), C.UINT(nIndex), C.LPSTR(unsafe.Pointer(&szStringBuf[0])), C.UINT(nStringLength))
+	errno := C.STDevice_GetStringDescriptor(dev.handle, C.UINT(nIndex), C.LPSTR(unsafe.Pointer(&szStringBuf[0])), C.UINT(nStringLength))
 	return "", checkSTError(int(errno))
 }
 
-func STDeviceGetDeviceDescriptor(device STDevice) (DeviceDesc, error) {
+func (dev STDevice) GetDeviceDescriptor() (DeviceDesc, error) {
 	var pDesc C.USB_DEVICE_DESCRIPTOR
-	errno := C.STDevice_GetDeviceDescriptor(C.HANDLE(device), C.PUSB_DEVICE_DESCRIPTOR(&pDesc))
+	errno := C.STDevice_GetDeviceDescriptor(dev.handle, C.PUSB_DEVICE_DESCRIPTOR(&pDesc))
 	desc := DeviceDesc(pDesc)
 	return desc, checkSTError(int(errno))
 }
 
-func STDevice_GetNbOfConfigurations(device STDevice) (uint, error) {
+func (dev STDevice) GetNbOfConfigurations() (uint, error) {
 	var numConfigs C.UINT
-	errno := C.STDevice_GetNbOfConfigurations(C.HANDLE(device), &numConfigs)
+	errno := C.STDevice_GetNbOfConfigurations(dev.handle, &numConfigs)
 	return uint(numConfigs), checkSTError(int(errno))
 }
 
-func STDeviceGetConfigurationDescriptor(device STDevice, nConfigIdx uint) (DeviceConfig, error) {
+func (dev STDevice) GetConfigurationDescriptor(nConfigIdx uint) (DeviceConfig, error) {
 	var cfg C.USB_CONFIGURATION_DESCRIPTOR
-	errno := C.STDevice_GetConfigurationDescriptor(C.HANDLE(device), C.UINT(nConfigIdx), &cfg)
+	errno := C.STDevice_GetConfigurationDescriptor(dev.handle, C.UINT(nConfigIdx), &cfg)
 	return DeviceConfig(cfg), checkSTError(int(errno))
 }
 
@@ -169,14 +144,26 @@ func main() {
 		return
 	}
 
-	fmt.Printf("Test: %s\r\n", devPath)
+	dev, err := Open(devPath)
 
-	var handle C.HANDLE
+	if err != nil {
+		fmt.Printf("Failed to open device: %v", err)
+		return
+	}
 
-	val1 := C.STDevice_Open(C.CString(devPath), C.LPHANDLE(&handle), C.LPHANDLE(C.NULL))
+	desc, err := dev.GetDeviceDescriptor()
 
-	C.STDevice_Close(C.HANDLE(handle))
+	if err != nil {
+		fmt.Printf("Failed to get device descriptor: %v", err)
+		return
+	}
 
-	fmt.Println(val1)
+	fmt.Printf("%s\r\n", desc)
+
+	err = dev.Close()
+
+	if err != nil {
+		fmt.Println(err)
+	}
 
 }
