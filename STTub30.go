@@ -54,18 +54,21 @@ const (
 	descriptorIntfAltSettingLevel = C.DESCRIPTOR_INTERFACEALTSET_LEVEL
 	descriptorEndpointLevel       = C.DESCRIPTOR_ENDPOINT_LEVEL
 
-	urbVendorDevice    = C.URB_FUNCTION_VENDOR_DEVICE
-	urbVendorInterface = C.URB_FUNCTION_VENDOR_INTERFACE
-	urbVendorEndpoint  = C.URB_FUNCTION_VENDOR_ENDPOINT
-	urbVendorOther     = C.URB_FUNCTION_VENDOR_OTHER
+	//Control Pipe Functions
+	UrbVendorDevice    = C.URB_FUNCTION_VENDOR_DEVICE
+	UrbVendorInterface = C.URB_FUNCTION_VENDOR_INTERFACE
+	UrbVendorEndpoint  = C.URB_FUNCTION_VENDOR_ENDPOINT
+	UrbVendorOther     = C.URB_FUNCTION_VENDOR_OTHER
 
-	urbClassDevice    = C.URB_FUNCTION_CLASS_DEVICE
-	urbClassInterface = C.URB_FUNCTION_CLASS_INTERFACE
-	urbClassEndpoint  = C.URB_FUNCTION_CLASS_ENDPOINT
-	urbClassOther     = C.URB_FUNCTION_CLASS_OTHER
+	//Control Pipe Functions
+	UrbClassDevice    = C.URB_FUNCTION_CLASS_DEVICE
+	UrbClassInterface = C.URB_FUNCTION_CLASS_INTERFACE
+	UrbClassEndpoint  = C.URB_FUNCTION_CLASS_ENDPOINT
+	UrbClassOther     = C.URB_FUNCTION_CLASS_OTHER
 
-	vendorDirectionIn  = C.VENDOR_DIRECTION_IN
-	vendorDirectionOut = C.VENDOR_DIRECTION_OUT
+	//Control Pipe Request Directions
+	VendorDirectionIn  = C.VENDOR_DIRECTION_IN
+	VendorDirectionOut = C.VENDOR_DIRECTION_OUT
 )
 
 type ControlPipeRequest struct {
@@ -309,6 +312,11 @@ func (dev STDevice) ControlPipeRequest(Request ControlPipeRequest, Data []byte) 
 		return fmt.Errorf("Data buffer too small, must be at least as large as Request.Length.")
 	}
 
-	errno := C.STDevice_ControlPipeRequest(dev.handle, &req, C.PBYTE(unsafe.Pointer(&Data[0])))
-	return checkSTError(int(errno))
+	if req.Length == 0 {
+		errno := C.STDevice_ControlPipeRequest(dev.handle, &req, nil)
+		return checkSTError(int(errno))
+	} else {
+		errno := C.STDevice_ControlPipeRequest(dev.handle, &req, C.PBYTE(unsafe.Pointer(&Data[0])))
+		return checkSTError(int(errno))
+	}
 }
