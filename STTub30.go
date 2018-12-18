@@ -98,7 +98,21 @@ type DeviceDesc struct {
 
 type DeviceDesc C.USB_DEVICE_DESCRIPTOR
 type DeviceConfig C.USB_CONFIGURATION_DESCRIPTOR
-type InterfaceDesc C.USB_INTERFACE_DESCRIPTOR
+
+//type InterfaceDesc C.USB_INTERFACE_DESCRIPTOR
+
+type InterfaceDesc struct {
+	Length               byte
+	DescriptorType       byte
+	InterfaceNumber      byte
+	AlternateString      byte
+	NumEndpoints         byte
+	InterfaceClass       byte
+	InterfaceSubClass    byte
+	InterfaceProtocol    byte
+	InterfaceStringIndex byte
+}
+
 type EndpointDesc C.USB_ENDPOINT_DESCRIPTOR
 
 func checkSTError(code int) error {
@@ -173,8 +187,17 @@ func (dev STDevice) GetNbOfAlternateInterfaces(configIndex, interfaceIndex uint)
 
 func (dev STDevice) GetInterfaceDescriptor(configIndex, interfaceIndex, nAltSetIdx uint) (InterfaceDesc, error) {
 	var desc C.USB_INTERFACE_DESCRIPTOR
+	var retval InterfaceDesc
 	errno := C.STDevice_GetInterfaceDescriptor(dev.handle, C.UINT(configIndex), C.UINT(interfaceIndex), C.UINT(nAltSetIdx), &desc)
-	return InterfaceDesc(desc), checkSTError(int(errno))
+	retval.Length = byte(desc.bLength)
+	retval.DescriptorType = byte(desc.bDescriptorType)
+	retval.InterfaceNumber = byte(desc.bInterfaceNumber)
+	retval.NumEndpoints = byte(desc.bNumEndpoints)
+	retval.InterfaceClass = byte(desc.bInterfaceClass)
+	retval.InterfaceSubClass = byte(desc.bInterfaceSubClass)
+	retval.InterfaceProtocol = byte(desc.bInterfaceProtocol)
+	retval.InterfaceStringIndex = byte(desc.iInterface)
+	return retval, checkSTError(int(errno))
 }
 
 func (dev STDevice) GetNbOfEndPoints(configIndex, interfaceIndex, nAltSetIdx uint) (uint, error) {
